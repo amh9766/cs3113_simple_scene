@@ -26,12 +26,12 @@
 
 enum AppStatus { RUNNING, TERMINATED };
 
-constexpr int WINDOW_WIDTH  = 640 * 2,
-              WINDOW_HEIGHT = 480 * 2;
+constexpr int WINDOW_WIDTH  = 1280,
+              WINDOW_HEIGHT = 960;
 
-constexpr float BG_RED     = 0.9765625f,
-                BG_GREEN   = 0.97265625f,
-                BG_BLUE    = 0.9609375f,
+constexpr float BG_RED     = 0.0f,
+                BG_GREEN   = 0.0f,
+                BG_BLUE    = 0.0f,
                 BG_OPACITY = 1.0f;
 
 constexpr int VIEWPORT_X      = 0,
@@ -48,9 +48,13 @@ constexpr GLint NUMBER_OF_TEXTURES = 1, // to be generated, that is
                 LEVEL_OF_DETAIL    = 0, // mipmap reduction image level
                 TEXTURE_BORDER     = 0; // this value MUST be zero
 
-// source: https://kiminoiro.jp/
-constexpr char KIMI_SPRITE_FILEPATH[]    = "kimi.png",
-               TOTSUKO_SPRITE_FILEPATH[] = "totsuko.png";
+// Sources:
+//      * Earth - https://nssdc.gsfc.nasa.gov/photo_gallery/photogallery-earth.html
+//      * Moon - https://nssdc.gsfc.nasa.gov/photo_gallery/photogallery-moon.html
+//      * Sun - https://nssdc.gsfc.nasa.gov/photo_gallery/photogallery-solar.html
+constexpr char EARTH_FILEPATH[] = "content/earth.png",
+               MOON_FILEPATH[]  = "content/moon.png",
+               SUN_FILEPATH[]   = "content/sun.png";
 
 constexpr glm::vec3 INIT_SCALE       = glm::vec3(5.0f, 5.98f, 0.0f),
                     INIT_POS_KIMI    = glm::vec3(2.0f, 0.0f, 0.0f),
@@ -63,17 +67,21 @@ AppStatus g_app_status = RUNNING;
 ShaderProgram g_shader_program = ShaderProgram();
 
 glm::mat4 g_view_matrix,
-          g_kimi_matrix,
-          g_totsuko_matrix,
+          g_earth_matrix,
+          g_moon_matrix,
+          g_sun_matrix,
           g_projection_matrix;
 
 float g_previous_ticks = 0.0f;
+int g_frame_counter = 0;
 
-glm::vec3 g_rotation_kimi    = glm::vec3(0.0f, 0.0f, 0.0f),
-          g_rotation_totsuko = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 g_sun_rotation   = glm::vec3(0.0f, 0.0f, 0.0f),
+          g_earth_position = glm::vec3(0.0f, 0.0f, 0.0f),
+          g_moon_position  = glm::vec3(0.0f, 0.0f, 0.0f);
 
-GLuint g_kimi_texture_id,
-       g_totsuko_texture_id;
+GLuint g_earth_texture_id,
+       g_moon_texture_id,
+       g_sun_texture_id;
 
 
 GLuint load_texture(const char* filepath)
@@ -110,7 +118,7 @@ void initialise()
     // Initialise video
     SDL_Init(SDL_INIT_VIDEO);
 
-    g_display_window = SDL_CreateWindow("Hello, Textures!",
+    g_display_window = SDL_CreateWindow("Simple Scene",
                                       SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                       WINDOW_WIDTH, WINDOW_HEIGHT,
                                       SDL_WINDOW_OPENGL);
@@ -133,10 +141,11 @@ void initialise()
 
     g_shader_program.load(V_SHADER_PATH, F_SHADER_PATH);
 
-    g_kimi_matrix       = glm::mat4(1.0f);
-    g_totsuko_matrix     = glm::mat4(1.0f);
+    g_earth_matrix      = glm::mat4(1.0f);
+    g_moon_matrix       = glm::mat4(1.0f);
+    g_sun_matrix        = glm::mat4(1.0f);
     g_view_matrix       = glm::mat4(1.0f);
-    g_projection_matrix = glm::ortho(-5.0f, 5.0f, -3.75f, 3.75f, -1.0f, 1.0f);
+    g_projection_matrix = glm::ortho(-4.0f, 4.0f, -3.0f, 3.0f, -1.0f, 1.0f);
 
     g_shader_program.set_projection_matrix(g_projection_matrix);
     g_shader_program.set_view_matrix(g_view_matrix);
@@ -145,8 +154,9 @@ void initialise()
 
     glClearColor(BG_RED, BG_BLUE, BG_GREEN, BG_OPACITY);
 
-    g_kimi_texture_id    = load_texture(KIMI_SPRITE_FILEPATH);
-    g_totsuko_texture_id = load_texture(TOTSUKO_SPRITE_FILEPATH);
+    g_earth_texture_id  = load_texture(EARTH_FILEPATH);
+    g_moon_texture_id   = load_texture(MOON_FILEPATH);
+    g_sun_texture_id    = load_texture(SUN_FILEPATH);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -174,25 +184,15 @@ void update()
     g_previous_ticks = ticks;
 
     /* Game logic */
-    g_rotation_kimi.y += ROT_INCREMENT * delta_time;
-    g_rotation_totsuko.y += -1 * ROT_INCREMENT * delta_time;
+    float theta = g_frame_counter * delta_time;
 
     /* Model matrix reset */
-    g_kimi_matrix    = glm::mat4(1.0f);
-    g_totsuko_matrix = glm::mat4(1.0f);
+    g_earth_matrix = glm::mat4(1.0f);
+    g_moon_matrix  = glm::mat4(1.0f);
+    g_sun_matrix   = glm::mat4(1.0f);
 
     /* Transformations */
-    g_kimi_matrix = glm::translate(g_kimi_matrix, INIT_POS_KIMI);
-    g_kimi_matrix = glm::rotate(g_kimi_matrix,                 // rotating in respect to kimi
-                                 g_rotation_kimi.y,            // by the accumulated amt in the y-axis
-                                 glm::vec3(0.0f, 1.0f, 0.0f)); // just in the y-axis
-    g_kimi_matrix = glm::scale(g_kimi_matrix, INIT_SCALE);
 
-    g_totsuko_matrix = glm::translate(g_totsuko_matrix, INIT_POS_TOTSUKO);
-    g_totsuko_matrix = glm::rotate(g_totsuko_matrix,
-                                  g_rotation_totsuko.y,
-                                  glm::vec3(0.0f, 1.0f, 0.0f));
-    g_totsuko_matrix = glm::scale(g_totsuko_matrix, INIT_SCALE);
 }
 
 
@@ -211,14 +211,27 @@ void render()
     // Vertices
     float vertices[] =
     {
-        -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f,  // triangle 1
-        -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f   // triangle 2
+        // Triangle 1
+        -0.5f, -0.5f, // Lower left
+        0.5f, -0.5f,  // Lower right
+        0.5f, 0.5f,   // Upper right
+        // Triangle 2
+        -0.5f, -0.5f, // Lower left
+        0.5f, 0.5f,   // Upper right
+        -0.5f, 0.5f   // Upper left
     };
 
     // Textures
-    float texture_coordinates[] = {
-            0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,     // triangle 1
-            0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f,     // triangle 2
+    float texture_coordinates[] =
+    {
+        // Triangle 1
+        0.0f, 1.0f, // Lower left
+        1.0f, 1.0f, // Lower right
+        1.0f, 0.0f, // Upper right
+        // Triangle 2
+        0.0f, 1.0f, // Lower left
+        1.0f, 0.0f, // Upper right
+        0.0f, 0.0f, // Upper left
     };
 
     glVertexAttribPointer(g_shader_program.get_position_attribute(), 2, GL_FLOAT, false,
@@ -230,8 +243,9 @@ void render()
     glEnableVertexAttribArray(g_shader_program.get_tex_coordinate_attribute());
 
     // Bind texture
-    draw_object(g_kimi_matrix, g_kimi_texture_id);
-    draw_object(g_totsuko_matrix, g_totsuko_texture_id);
+    draw_object(g_earth_matrix, g_earth_texture_id);
+    draw_object(g_moon_matrix, g_moon_texture_id);
+    draw_object(g_sun_matrix, g_sun_texture_id);
 
     // We disable two attribute arrays now
     glDisableVertexAttribArray(g_shader_program.get_position_attribute());
