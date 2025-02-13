@@ -39,10 +39,7 @@
 		CA10DB7B2D5D3B6C0029CD4F /* ShaderProgram.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ShaderProgram.cpp; sourceTree = "<group>"; };
 		CA10DB7C2D5D3B6C0029CD4F /* helper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = helper.cpp; sourceTree = "<group>"; };
 		CA10DB7E2D5D3B6C0029CD4F /* ShaderProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ShaderProgram.h; sourceTree = "<group>"; };
-		CA10DB7F2D5D3B6C0029CD4F /* kimi.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = kimi.png; sourceTree = "<group>"; };
 		CA10DB802D5D3B6C0029CD4F /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stb_image.h; sourceTree = "<group>"; };
-		CA10DB812D5D3B6C0029CD4F /* rui.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = rui.png; sourceTree = "<group>"; };
-		CA10DB822D5D3B6C0029CD4F /* totsuko.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = totsuko.png; sourceTree = "<group>"; };
 		CA10DB832D5D3B6C0029CD4F /* glm */ = {isa = PBXFileReference; lastKnownFileType = folder; path = glm; sourceTree = "<group>"; };
 		CA10DB872D5D3C060029CD4F /* SDL2_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_image.framework; path = ../../../../../../../../Library/Frameworks/SDL2_image.framework; sourceTree = "<group>"; };
 		CA10DB882D5D3C060029CD4F /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = ../../../../../../../../Library/Frameworks/SDL2.framework; sourceTree = "<group>"; };
@@ -93,12 +90,9 @@
 				CA10DB952D5D3D550029CD4F /* shaders */,
 				CA10DB832D5D3B6C0029CD4F /* glm */,
 				CA10DB7C2D5D3B6C0029CD4F /* helper.cpp */,
-				CA10DB7F2D5D3B6C0029CD4F /* kimi.png */,
-				CA10DB812D5D3B6C0029CD4F /* rui.png */,
 				CA10DB7B2D5D3B6C0029CD4F /* ShaderProgram.cpp */,
 				CA10DB7E2D5D3B6C0029CD4F /* ShaderProgram.h */,
 				CA10DB802D5D3B6C0029CD4F /* stb_image.h */,
-				CA10DB822D5D3B6C0029CD4F /* totsuko.png */,
 				CA10DB742D5D38670029CD4F /* main.cpp */,
 			);
 			path = simple_scene;
