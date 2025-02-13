@@ -26,8 +26,8 @@
 
 enum AppStatus { RUNNING, TERMINATED };
 
-constexpr int WINDOW_WIDTH  = 1280,
-              WINDOW_HEIGHT = 960;
+constexpr int WINDOW_WIDTH  = 960,
+              WINDOW_HEIGHT = 720;
 
 constexpr float BG_RED     = 0.0f,
                 BG_GREEN   = 0.0f,
@@ -56,11 +56,12 @@ constexpr char EARTH_FILEPATH[] = "content/earth.png",
                MOON_FILEPATH[]  = "content/moon.png",
                SUN_FILEPATH[]   = "content/sun.png";
 
-constexpr glm::vec3 INIT_SCALE       = glm::vec3(5.0f, 5.98f, 0.0f),
-                    INIT_POS_KIMI    = glm::vec3(2.0f, 0.0f, 0.0f),
-                    INIT_POS_TOTSUKO = glm::vec3(-2.0f, 0.0f, 0.0f);
+constexpr float EARTH_ORBIT_RADIUS = 2.50f,
+                MOON_ORBIT_RADIUS = 0.75f;
 
-constexpr float ROT_INCREMENT = 1.0f;
+constexpr glm::vec3 EARTH_INIT_SCALE = glm::vec3(0.75f, 0.75f, 0.0f),
+                    MOON_INIT_SCALE = glm::vec3(0.25f, 0.25f, 0.25f),
+                    SUN_INIT_SCALE = glm::vec3(4.0f, 4.0f, 0.0f);
 
 SDL_Window* g_display_window;
 AppStatus g_app_status = RUNNING;
@@ -73,7 +74,7 @@ glm::mat4 g_view_matrix,
           g_projection_matrix;
 
 float g_previous_ticks = 0.0f;
-int g_frame_counter = 0;
+float g_cumulative_delta_time = 0.0f;
 
 glm::vec3 g_sun_rotation   = glm::vec3(0.0f, 0.0f, 0.0f),
           g_earth_position = glm::vec3(0.0f, 0.0f, 0.0f),
@@ -183,8 +184,18 @@ void update()
     float delta_time = ticks - g_previous_ticks;
     g_previous_ticks = ticks;
 
+    g_cumulative_delta_time += delta_time;
+
     /* Game logic */
-    float theta = g_frame_counter * delta_time;
+    float earth_theta = g_cumulative_delta_time;
+    float moon_theta = -earth_theta * 2.0f;
+    float sun_theta = earth_theta * 1.5f;
+
+    g_earth_position.x = EARTH_ORBIT_RADIUS * cosf(earth_theta);
+    g_earth_position.y = EARTH_ORBIT_RADIUS * sinf(earth_theta);
+
+    g_moon_position.x = MOON_ORBIT_RADIUS * cosf(moon_theta);
+    g_moon_position.y = MOON_ORBIT_RADIUS * sinf(moon_theta);
 
     /* Model matrix reset */
     g_earth_matrix = glm::mat4(1.0f);
@@ -192,6 +203,15 @@ void update()
     g_sun_matrix   = glm::mat4(1.0f);
 
     /* Transformations */
+    g_earth_matrix = glm::translate(g_earth_matrix, g_earth_position);
+    g_earth_matrix = glm::scale(g_earth_matrix, EARTH_INIT_SCALE);
+
+    g_moon_matrix = glm::translate(g_moon_matrix, g_earth_position);
+    g_moon_matrix = glm::translate(g_moon_matrix, g_moon_position);
+    g_moon_matrix = glm::scale(g_moon_matrix, MOON_INIT_SCALE);
+
+    glm::vec3 g_sun_scale = SUN_INIT_SCALE * (1.0f - 0.1f*cosf(sun_theta));
+    g_sun_matrix = glm::scale(g_sun_matrix, g_sun_scale);
 
 }
 
