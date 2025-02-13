@@ -52,6 +52,7 @@ constexpr GLint NUMBER_OF_TEXTURES = 1, // to be generated, that is
 //      * Earth - https://nssdc.gsfc.nasa.gov/photo_gallery/photogallery-earth.html
 //      * Moon - https://nssdc.gsfc.nasa.gov/photo_gallery/photogallery-moon.html
 //      * Sun - https://nssdc.gsfc.nasa.gov/photo_gallery/photogallery-solar.html
+//      * Universe - https://science.nasa.gov/image-detail/nustar160728a-2/
 constexpr char EARTH_FILEPATH[]      = "content/earth.png",
                MOON_FILEPATH[]       = "content/moon.png",
                SUN_FILEPATH[]        = "content/sun.png",
