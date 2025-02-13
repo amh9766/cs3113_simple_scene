@@ -52,25 +52,28 @@ constexpr GLint NUMBER_OF_TEXTURES = 1, // to be generated, that is
 //      * Earth - https://nssdc.gsfc.nasa.gov/photo_gallery/photogallery-earth.html
 //      * Moon - https://nssdc.gsfc.nasa.gov/photo_gallery/photogallery-moon.html
 //      * Sun - https://nssdc.gsfc.nasa.gov/photo_gallery/photogallery-solar.html
-constexpr char EARTH_FILEPATH[] = "content/earth.png",
-               MOON_FILEPATH[]  = "content/moon.png",
-               SUN_FILEPATH[]   = "content/sun.png";
+constexpr char EARTH_FILEPATH[]      = "content/earth.png",
+               MOON_FILEPATH[]       = "content/moon.png",
+               SUN_FILEPATH[]        = "content/sun.png",
+               UNIVERSE_FILEPATH[]   = "content/universe.jpg";
 
 constexpr float EARTH_ORBIT_RADIUS = 2.50f,
-                MOON_ORBIT_RADIUS = 0.75f;
+                MOON_ORBIT_RADIUS  = 0.75f;
 
-constexpr glm::vec3 EARTH_INIT_SCALE = glm::vec3(0.75f, 0.75f, 0.0f),
-                    MOON_INIT_SCALE = glm::vec3(0.25f, 0.25f, 0.25f),
-                    SUN_INIT_SCALE = glm::vec3(4.0f, 4.0f, 0.0f);
+constexpr glm::vec3 EARTH_INIT_SCALE    = glm::vec3(0.75f, 0.75f, 0.0f),
+                    MOON_INIT_SCALE     = glm::vec3(0.25f, 0.25f, 0.25f),
+                    SUN_INIT_SCALE      = glm::vec3(4.0f, 4.0f, 0.0f),
+                    UNIVERSE_INIT_SCALE = glm::vec3(8.0f, 8.0f, 0.0f);
 
 SDL_Window* g_display_window;
 AppStatus g_app_status = RUNNING;
 ShaderProgram g_shader_program = ShaderProgram();
 
-glm::mat4 g_view_matrix,
-          g_earth_matrix,
+glm::mat4 g_earth_matrix,
           g_moon_matrix,
           g_sun_matrix,
+          g_universe_matrix,
+          g_view_matrix,
           g_projection_matrix;
 
 float g_previous_ticks = 0.0f;
@@ -82,7 +85,8 @@ glm::vec3 g_sun_rotation   = glm::vec3(0.0f, 0.0f, 0.0f),
 
 GLuint g_earth_texture_id,
        g_moon_texture_id,
-       g_sun_texture_id;
+       g_sun_texture_id,
+       g_universe_texture_id;
 
 
 GLuint load_texture(const char* filepath)
@@ -145,6 +149,7 @@ void initialise()
     g_earth_matrix      = glm::mat4(1.0f);
     g_moon_matrix       = glm::mat4(1.0f);
     g_sun_matrix        = glm::mat4(1.0f);
+    g_universe_matrix   = glm::mat4(1.0f);
     g_view_matrix       = glm::mat4(1.0f);
     g_projection_matrix = glm::ortho(-4.0f, 4.0f, -3.0f, 3.0f, -1.0f, 1.0f);
 
@@ -155,9 +160,10 @@ void initialise()
 
     glClearColor(BG_RED, BG_BLUE, BG_GREEN, BG_OPACITY);
 
-    g_earth_texture_id  = load_texture(EARTH_FILEPATH);
-    g_moon_texture_id   = load_texture(MOON_FILEPATH);
-    g_sun_texture_id    = load_texture(SUN_FILEPATH);
+    g_earth_texture_id       = load_texture(EARTH_FILEPATH);
+    g_moon_texture_id        = load_texture(MOON_FILEPATH);
+    g_sun_texture_id         = load_texture(SUN_FILEPATH);
+    g_universe_texture_id    = load_texture(UNIVERSE_FILEPATH);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -183,13 +189,13 @@ void update()
     float ticks = (float) SDL_GetTicks() / MILLISECONDS_IN_SECOND;
     float delta_time = ticks - g_previous_ticks;
     g_previous_ticks = ticks;
-
     g_cumulative_delta_time += delta_time;
 
     /* Game logic */
-    float earth_theta = g_cumulative_delta_time;
-    float moon_theta = -earth_theta * 2.0f;
-    float sun_theta = earth_theta * 1.5f;
+    float earth_theta    = g_cumulative_delta_time;
+    float moon_theta     = -earth_theta * 2.0f;
+    float sun_theta      = earth_theta * 1.5f;
+    float universe_theta = earth_theta * 0.2f;
 
     g_earth_position.x = EARTH_ORBIT_RADIUS * cosf(earth_theta);
     g_earth_position.y = EARTH_ORBIT_RADIUS * sinf(earth_theta);
@@ -198,9 +204,10 @@ void update()
     g_moon_position.y = MOON_ORBIT_RADIUS * sinf(moon_theta);
 
     /* Model matrix reset */
-    g_earth_matrix = glm::mat4(1.0f);
-    g_moon_matrix  = glm::mat4(1.0f);
-    g_sun_matrix   = glm::mat4(1.0f);
+    g_earth_matrix      = glm::mat4(1.0f);
+    g_moon_matrix       = glm::mat4(1.0f);
+    g_sun_matrix        = glm::mat4(1.0f);
+    g_universe_matrix   = glm::mat4(1.0f);
 
     /* Transformations */
     g_earth_matrix = glm::translate(g_earth_matrix, g_earth_position);
@@ -213,6 +220,10 @@ void update()
     glm::vec3 g_sun_scale = SUN_INIT_SCALE * (1.0f - 0.1f*cosf(sun_theta));
     g_sun_matrix = glm::scale(g_sun_matrix, g_sun_scale);
 
+    g_universe_matrix = glm::rotate(g_universe_matrix, 
+                                      universe_theta,
+                                      glm::vec3(0.0f, 0.0f, 1.0f));
+    g_universe_matrix = glm::scale(g_universe_matrix, UNIVERSE_INIT_SCALE);
 }
 
 
@@ -263,6 +274,7 @@ void render()
     glEnableVertexAttribArray(g_shader_program.get_tex_coordinate_attribute());
 
     // Bind texture
+    draw_object(g_universe_matrix, g_universe_texture_id);
     draw_object(g_earth_matrix, g_earth_texture_id);
     draw_object(g_moon_matrix, g_moon_texture_id);
     draw_object(g_sun_matrix, g_sun_texture_id);
